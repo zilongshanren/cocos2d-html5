@@ -62,7 +62,7 @@ var dataPool = {
     }
 };
 
-var FIX_ARTIFACTS_BY_STRECHING_TEXEL = cc.macro.FIX_ARTIFACTS_BY_STRECHING_TEXEL,
+var FIX_ARTIFACTS_BY_STRECHING_TEXEL = cc.FIX_ARTIFACTS_BY_STRECHING_TEXEL,
     webgl,
     vl, vb, vt, vr,
     cornerId = [];
@@ -372,24 +372,6 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
     _flippedY: false,
 
     /**
-     * return  texture is loaded
-     * @returns {boolean}
-     */
-    textureLoaded:function(){
-        return this._textureLoaded;
-    },
-
-    /**
-     * add texture loaded event listener
-     * @param {Function} callback
-     * @param {Object} target
-     * @deprecated since 3.1, please use addEventListener instead
-     */
-    addLoadedEventListener:function(callback, target){
-        this.addEventListener("load", callback, target);
-    },
-
-    /**
      * Constructor function.
      * @function
      * @param {string|cc.SpriteFrame} file file name of texture or a SpriteFrame
@@ -399,7 +381,8 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
      */
     ctor: function (file, rectOrCapInsets, capInsets) {
         cc.Node.prototype.ctor.call(this);
-        this._loader = new cc.Sprite.LoadManager();
+        //TODO:
+        // this._loader = new cc.Sprite.LoadManager();
 
         this._renderCmd.setState(this._brightState);
         this._blendFunc = cc.BlendFunc._alphaNonPremultiplied();
@@ -717,9 +700,9 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
 
     _createRenderCmd: function () {
         if (cc._renderType === cc.game.RENDER_TYPE_CANVAS)
-            return new cc.Scale9Sprite.CanvasRenderCmd(this);
+            return new ccui.Scale9Sprite.CanvasRenderCmd(this);
         else
-            return new cc.Scale9Sprite.WebGLRenderCmd(this);
+            return new ccui.Scale9Sprite.WebGLRenderCmd(this);
     }
 });
 
