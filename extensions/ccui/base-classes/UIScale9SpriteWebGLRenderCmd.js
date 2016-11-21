@@ -30,21 +30,22 @@
     ccui.Scale9Sprite.WebGLRenderCmd = function (renderable) {
         cc.Node.WebGLRenderCmd.call(this, renderable);
 
-        if (this._node.loaded()) {
-            this._needDraw = true;
-        }
-        else {
-            this._needDraw = false;
-        }
+        this._needDraw = true;
 
         this._color = new Uint32Array(1);
         this._dirty = false;
         this._shaderProgram = cc.shaderCache.programForKey(cc.SHADER_SPRITE_POSITION_TEXTURECOLOR);
     };
 
+
+
     var Scale9Sprite = ccui.Scale9Sprite;
     var proto = ccui.Scale9Sprite.WebGLRenderCmd.prototype = Object.create(cc.Node.WebGLRenderCmd.prototype);
     proto.constructor = ccui.Scale9Sprite.WebGLRenderCmd;
+
+    proto.needDraw = function () {
+        return this._needDraw && this._node.loaded();
+    };
 
     proto._uploadSliced = function (vertices, uvs, color, z, f32buffer, ui32buffer, offset) {
         var off;

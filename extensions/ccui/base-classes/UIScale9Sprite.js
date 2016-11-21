@@ -62,10 +62,7 @@ var dataPool = {
     }
 };
 
-var FIX_ARTIFACTS_BY_STRECHING_TEXEL = cc.FIX_ARTIFACTS_BY_STRECHING_TEXEL,
-    webgl,
-    vl, vb, vt, vr,
-    cornerId = [];
+var FIX_ARTIFACTS_BY_STRECHING_TEXEL = cc.FIX_ARTIFACTS_BY_STRECHING_TEXEL, cornerId = [], webgl;
 
 
 var simpleQuadGenerator = {
@@ -252,8 +249,8 @@ var scale9QuadGenerator = {
     _calculateUVs: function (sprite, spriteFrame, insetLeft, insetRight, insetTop, insetBottom) {
         var uvs = sprite._uvs;
         var rect = spriteFrame._rect;
-        var atlasWidth = spriteFrame._texture._pixelWidth;
-        var atlasHeight = spriteFrame._texture._pixelHeight;
+        var atlasWidth = spriteFrame._texture._pixelsWide;
+        var atlasHeight = spriteFrame._texture._pixelsHigh;
 
         //caculate texture coordinate
         var leftWidth, centerWidth, rightWidth;
@@ -416,10 +413,6 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
 
         if (webgl === undefined) {
             webgl = cc._renderType === cc.game.RENDER_TYPE_WEBGL;
-            vl = cc.visibleRect.left;
-            vr = cc.visibleRect.right;
-            vt = cc.visibleRect.top;
-            vb = cc.visibleRect.bottom;
         }
 
         this._updateCapInsets(rectOrCapInsets, capInsets);
@@ -476,7 +469,7 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
             return false;
         }
 
-        this.setTexture(texture);
+        this.setTexture(texture, rect);
         this._updateCapInsets(rect, capInsets);
 
         return true;
@@ -488,8 +481,17 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
         }
 
         var texture = batchNode.getTexture();
+        this._loader.clear();
+        var loaded = this._textureLoaded = texture.isLoaded();
+        if (!loaded) {
+            this._loader.once(texture, function () {
+                this.updateWithBatchNode(batchNode, originalRect, rotated, capInsets);
+                this.dispatchEvent("load");
+            }, this);
+            return false;
+        }
 
-        this.setTexture(texture);
+        this.setTexture(texture, originalRect);
         this._updateCapInsets(originalRect, capInsets);
 
         return true;
@@ -501,8 +503,8 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
      *
      * @param textureOrTextureFile The name of the texture file.
      */
-    initWithTexture: function (textureOrTextureFile) {
-        this.setTexture(textureOrTextureFile);
+    initWithTexture: function (textureOrTextureFile, rect) {
+        this.setTexture(textureOrTextureFile, rect);
     },
 
     /**
@@ -526,8 +528,8 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
      *
      * @param textureOrTextureFile The name of the texture file.
      */
-    setTexture: function (textureOrTextureFile) {
-        var spriteFrame = new cc.SpriteFrame(textureOrTextureFile);
+    setTexture: function (textureOrTextureFile, rect) {
+        var spriteFrame = new cc.SpriteFrame(textureOrTextureFile, rect);
         this.setSpriteFrame(spriteFrame);
     },
 
@@ -549,14 +551,13 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
             this._spriteFrame = spriteFrame;
             this._quadsDirty = true;
             this._uvsDirty = true;
-            this._renderCmd._needDraw = false;
             var self = this;
             var onResourceDataLoaded = function () {
                 if (cc.sizeEqualToSize(self._contentSize, cc.size(0, 0))) {
                     self.setContentSize(self._spriteFrame._rect);
                 }
-                self._renderCmd._needDraw = true;
                 self._renderCmd.setDirtyFlag(cc.Node._dirtyFlags.contentDirty);
+                cc.renderer.childrenOrderDirty = true;
             };
             if (spriteFrame.textureLoaded()) {
                 onResourceDataLoaded();
@@ -722,7 +723,6 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
 
     _rebuildQuads: function () {
         if (!this._spriteFrame || !this._spriteFrame._textureLoaded) {
-            this._renderCmd._needDraw = false;
             return;
         }
         this._isTriangle = false;
@@ -736,37 +736,10 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
           default:
               this._quadsDirty = false;
               this._uvsDirty = false;
-              this._renderCmd._needDraw = false;
               cc.error('Can not generate quad');
               return;
         }
 
-        // Culling
-        if (webgl) {
-            var vert = this._isTriangle ? this._rawVerts : this._vertices,
-                x0 = vert[cornerId[0]], x1 = vert[cornerId[1]], x2 = vert[cornerId[2]], x3 = vert[cornerId[3]],
-                y0 = vert[cornerId[0]+1], y1 = vert[cornerId[1]+1], y2 = vert[cornerId[2]+1], y3 = vert[cornerId[3]+1];
-            if (((x0-vl.x) & (x1-vl.x) & (x2-vl.x) & (x3-vl.x)) >> 31 || // All outside left
-                ((vr.x-x0) & (vr.x-x1) & (vr.x-x2) & (vr.x-x3)) >> 31 || // All outside right
-                ((y0-vb.y) & (y1-vb.y) & (y2-vb.y) & (y3-vb.y)) >> 31 || // All outside bottom
-                ((vt.y-y0) & (vt.y-y1) & (vt.y-y2) & (vt.y-y3)) >> 31)   // All outside top
-            {
-                this._renderCmd._needDraw = false;
-            }
-            else {
-                this._renderCmd._needDraw = true;
-            }
-        }
-        else {
-            var bb = this._renderCmd._currentRegion,
-                l = bb._minX, r = bb._maxX, b = bb._minY, t = bb._maxY;
-            if (r < vl.x || l > vr.x || t < vb.y || b > vt.y) {
-                this._renderCmd._needDraw = false;
-            }
-            else {
-                this._renderCmd._needDraw = true;
-            }
-        }
 
         this._quadsDirty = false;
         this._uvsDirty = false;
