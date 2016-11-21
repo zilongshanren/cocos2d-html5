@@ -488,15 +488,6 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
         }
 
         var texture = batchNode.getTexture();
-        this._loader.clear();
-        var loaded = this._textureLoaded = texture.isLoaded();
-        if (!loaded) {
-            this._loader.once(texture, function () {
-                this.updateWithBatchNode(batchNode, originalRect, rotated, capInsets);
-                this.dispatchEvent("load");
-            }, this);
-            return false;
-        }
 
         this.setTexture(texture);
         this._updateCapInsets(originalRect, capInsets);
@@ -565,7 +556,7 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
                     self.setContentSize(self._spriteFrame._rect);
                 }
                 self._renderCmd._needDraw = true;
-                self._renderCmd.setDirtyFlag(_ccsg.Node._dirtyFlags.contentDirty);
+                self._renderCmd.setDirtyFlag(cc.Node._dirtyFlags.contentDirty);
             };
             if (spriteFrame.textureLoaded()) {
                 onResourceDataLoaded();
@@ -593,7 +584,7 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
             this._blendFunc.src = blendFunc || cc.macro.BLEND_SRC;
             this._blendFunc.dst = dst || cc.macro.BLEND_DST;
         }
-        this._renderCmd.setDirtyFlag(_ccsg.Node._dirtyFlags.contentDirty);
+        this._renderCmd.setDirtyFlag(cc.Node._dirtyFlags.contentDirty);
     },
 
     /**
@@ -615,7 +606,7 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
             return;
         }
 
-        _ccsg.Node.prototype.setContentSize.call(this, width, height);
+        cc.Node.prototype.setContentSize.call(this, width, height);
         this._quadsDirty = true;
     },
 
@@ -627,7 +618,7 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
     setState: function (state) {
         this._brightState = state;
         this._renderCmd.setState(state);
-        this._renderCmd.setDirtyFlag(_ccsg.Node._dirtyFlags.contentDirty);
+        this._renderCmd.setDirtyFlag(cc.Node._dirtyFlags.contentDirty);
     },
 
     /**
@@ -647,7 +638,7 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
         this._renderingType = type;
         this._quadsDirty = true;
         this._uvsDirty = true;
-        this._renderCmd.setDirtyFlag(_ccsg.Node._dirtyFlags.contentDirty);
+        this._renderCmd.setDirtyFlag(cc.Node._dirtyFlags.contentDirty);
     },
     /**
      * get the rendering type, could be simple or slice
@@ -664,7 +655,7 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
         this._insetLeft = insetLeft;
         this._quadsDirty = true;
         this._uvsDirty = true;
-        this._renderCmd.setDirtyFlag(_ccsg.Node._dirtyFlags.contentDirty);
+        this._renderCmd.setDirtyFlag(cc.Node._dirtyFlags.contentDirty);
     },
     /**
      * get the left border of 9 slice sprite, the result is specified before trimmed.
@@ -681,7 +672,7 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
         this._insetTop = insetTop;
         this._quadsDirty = true;
         this._uvsDirty = true;
-        this._renderCmd.setDirtyFlag(_ccsg.Node._dirtyFlags.contentDirty);
+        this._renderCmd.setDirtyFlag(cc.Node._dirtyFlags.contentDirty);
     },
 
     /**
@@ -700,7 +691,7 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
         this._insetRight = insetRight;
         this._quadsDirty = true;
         this._uvsDirty = true;
-        this._renderCmd.setDirtyFlag(_ccsg.Node._dirtyFlags.contentDirty);
+        this._renderCmd.setDirtyFlag(cc.Node._dirtyFlags.contentDirty);
     },
 
     /**
@@ -719,7 +710,7 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
         this._insetBottom = insetBottom;
         this._quadsDirty = true;
         this._uvsDirty = true;
-        this._renderCmd.setDirtyFlag(_ccsg.Node._dirtyFlags.contentDirty);
+        this._renderCmd.setDirtyFlag(cc.Node._dirtyFlags.contentDirty);
     },
     /**
      * get the bottom border of 9 slice sprite, the result is specified before trimmed.
