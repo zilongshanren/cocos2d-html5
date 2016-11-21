@@ -419,23 +419,21 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
     },
 
     _updateCapInsets: function (rect, capInsets) {
-        if(!capInsets || !rect) return;
-
-        var capInsetsInternal;
-        if(cc._rectEqualToZero(capInsets)) {
-            capInsetsInternal = cc.rect(rect.width /3,
-                                            rect.height /3,
-                                            rect.width /3,
-                                            rect.height /3);
+        if(!capInsets || !rect || cc._rectEqualToZero(capInsets)) {
+            rect = rect || {x:0, y:0, width: this._contentSize.width, height: this._contentSize.height};
+            this._capInsetsInternal = cc.rect(rect.width /3,
+                                              rect.height /3,
+                                              rect.width /3,
+                                              rect.height /3);
         } else {
-            capInsetsInternal = capInsets;
+            this._capInsetsInternal = capInsets;
         }
 
         if(!cc._rectEqualToZero(rect)) {
-            this._insetLeft = capInsetsInternal.x;
-            this._insetTop = capInsetsInternal.y;
-            this._insetRight = rect.width - this._insetLeft - capInsetsInternal.width;
-            this._insetBottom = rect.width - this._insetTop - capInsetsInternal.height;
+            this._insetLeft = this._capInsetsInternal.x;
+            this._insetTop = this._capInsetsInternal.y;
+            this._insetRight = rect.width - this._insetLeft - this._capInsetsInternal.width;
+            this._insetBottom = rect.width - this._insetTop - this._capInsetsInternal.height;
         }
     },
 
@@ -608,6 +606,16 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
         }
 
         cc.Node.prototype.setContentSize.call(this, width, height);
+        this._quadsDirty = true;
+    },
+
+    _setWidth: function (value) {
+        cc.Node.prototype._setWidth.call(this, value);
+        this._quadsDirty = true;
+    },
+
+    _setHeight: function (value) {
+        cc.Node.prototype._setHeight.call(this, value);
         this._quadsDirty = true;
     },
 
