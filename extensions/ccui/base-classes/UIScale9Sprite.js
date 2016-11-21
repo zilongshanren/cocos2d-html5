@@ -344,6 +344,7 @@ var scale9QuadGenerator = {
 ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprite# */{
     //resource data, could be async loaded.
     _spriteFrame: null,
+    _scale9Image: null,
 
     //scale 9 data
     _insetLeft: 0,
@@ -379,10 +380,11 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
      * @param {cc.Rect} capInsets
      * @returns {Scale9Sprite}
      */
-    ctor: function (file, rectOrCapInsets, capInsets) {
+    ctor: function (textureOrSpriteFrame, rectOrCapInsets, capInsets) {
         cc.Node.prototype.ctor.call(this);
-        //TODO:
-        // this._loader = new cc.Sprite.LoadManager();
+
+        //for async texture load
+        this._loader = new cc.Sprite.LoadManager();
 
         this._renderCmd.setState(this._brightState);
         this._blendFunc = cc.BlendFunc._alphaNonPremultiplied();
@@ -394,33 +396,114 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
         this._uvs = dataPool.get(8) || new Float32Array(8);
 
 
-        if (file !== undefined) {
-            if (file instanceof cc.SpriteFrame)
-                this.initWithSpriteFrame(file, rectOrCapInsets);
-            else {
-                var frame = cc.spriteFrameCache.getSpriteFrame(file);
-                if (frame)
-                    this.initWithSpriteFrame(frame, rectOrCapInsets);
-                else
-                    this.initWithFile(file, rectOrCapInsets, capInsets);
+        // Init sprite frame
+        if (typeof textureOrSpriteFrame === 'string') {
+            var frame = cc.spriteFrameCache.getSpriteFrame(textureOrSpriteFrame);
+            if (frame) {
+                this.initWithSpriteFrame(frame);
+            } else {
+                this.initWithTexture(textureOrSpriteFrame);
             }
+        } else if (textureOrSpriteFrame instanceof cc.SpriteFrame) {
+            this.initWithSpriteFrame(textureOrSpriteFrame);
         }
-        else {
-            this.init();
-            this.setCascadeColorEnabled(true);
-            this.setCascadeOpacityEnabled(true);
-            this.setAnchorPoint(0.5, 0.5);
-            this._positionsAreDirty = true;
+        else if (textureOrSpriteFrame instanceof cc.Texture2D) {
+            this.initWithTexture(textureOrSpriteFrame);
+        } else {
+            //TODO:
+            // this.init();
+        }
+
+        if (webgl === undefined) {
+            webgl = cc._renderType === cc.game.RENDER_TYPE_WEBGL;
+            vl = cc.visibleRect.left;
+            vr = cc.visibleRect.right;
+            vt = cc.visibleRect.top;
+            vb = cc.visibleRect.bottom;
+        }
+
+        this._updateCapInsets(rectOrCapInsets, capInsets);
+    },
+
+    _updateCapInsets: function (rect, capInsets) {
+        if(!capInsets || !rect) return;
+
+        var capInsetsInternal;
+        if(cc._rectEqualToZero(capInsets)) {
+            capInsetsInternal = cc.rect(rect.width /3,
+                                            rect.height /3,
+                                            rect.width /3,
+                                            rect.height /3);
+        } else {
+            capInsetsInternal = capInsets;
+        }
+
+        if(!cc._rectEqualToZero(rect)) {
+            this._insetLeft = capInsetsInternal.x;
+            this._insetTop = capInsetsInternal.y;
+            this._insetRight = rect.width - this._insetLeft - capInsetsInternal.width;
+            this._insetBottom = rect.width - this._insetTop - capInsetsInternal.height;
         }
     },
 
-    loaded: function () {
-        if (this._spriteFrame === null) {
-            return false;
+
+    initWithFile: function (file, rect, capInsets) {
+        if (file instanceof cc.Rect) {
+            file = arguments[1];
+            capInsets = arguments[0];
+            rect = cc.rect(0, 0, 0, 0);
         } else {
-            return this._spriteFrame.textureLoaded();
+            rect = rect || cc.rect(0, 0, 0, 0);
+            capInsets = capInsets || cc.rect(0, 0, 0, 0);
         }
+
+        if(!file)
+            throw new Error("ccui.Scale9Sprite.initWithFile(): file should be non-null");
+
+        var texture = cc.textureCache.getTextureForKey(file);
+        if (!texture) {
+            texture = cc.textureCache.addImage(file);
+        }
+
+        var locLoaded = texture.isLoaded();
+        this._textureLoaded = locLoaded;
+        this._loader.clear();
+        if (!locLoaded) {
+            this._loader.once(texture, function () {
+                this.initWithFile(file, rect, capInsets);
+                this.dispatchEvent("load");
+            }, this);
+            return false;
+        }
+
+        this.setTexture(texture);
+        this._updateCapInsets(rect, capInsets);
+
+        return true;
     },
+
+    updateWithBatchNode: function (batchNode, originalRect, rotated, capInsets) {
+        if (!batchNode) {
+            return false;
+        }
+
+        var texture = batchNode.getTexture();
+        this._loader.clear();
+        var loaded = this._textureLoaded = texture.isLoaded();
+        if (!loaded) {
+            this._loader.once(texture, function () {
+                this.updateWithBatchNode(batchNode, originalRect, rotated, capInsets);
+                this.dispatchEvent("load");
+            }, this);
+            return false;
+        }
+
+        this.setTexture(texture);
+        this._updateCapInsets(originalRect, capInsets);
+
+        return true;
+    },
+
 
     /**
      * Initializes a 9-slice sprite with a texture file
@@ -437,6 +520,14 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
      */
     initWithSpriteFrame: function (spriteFrameOrSFName) {
         this.setSpriteFrame(spriteFrameOrSFName);
+    },
+
+    loaded: function () {
+        if (this._spriteFrame === null) {
+            return false;
+        } else {
+            return this._spriteFrame.textureLoaded();
+        }
     },
 
     /**
@@ -479,7 +570,11 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
             if (spriteFrame.textureLoaded()) {
                 onResourceDataLoaded();
             } else {
-                spriteFrame.once('load', onResourceDataLoaded, this);
+                this._loader.clear();
+                this._loader.once(spriteFrame, function () {
+                    onResourceDataLoaded();
+                    this.dispatchEvent("load");
+                }, this);
             }
         }
     },
@@ -524,18 +619,6 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
         this._quadsDirty = true;
     },
 
-    //
-    enableTrimmedContentSize: function (isTrimmed) {
-        if (this._isTrimmedContentSize !== isTrimmed) {
-            this._isTrimmedContentSize = isTrimmed;
-            this._quadsDirty = true;
-            this._renderCmd.setDirtyFlag(_ccsg.Node._dirtyFlags.contentDirty);
-        }
-    },
-
-    isTrimmedContentSizeEnabled: function () {
-        return this._isTrimmedContentSize;
-    },
     /**
      * Change the state of 9-slice sprite.
      * @see `State`
@@ -653,18 +736,18 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
         }
         this._isTriangle = false;
         switch (this._renderingType) {
-        case RenderingType.SIMPLE:
-            simpleQuadGenerator._rebuildQuads_base(this, this._spriteFrame, this._contentSize, this._isTrimmedContentSize);
-            break;
-        case RenderingType.SLICED:
-            scale9QuadGenerator._rebuildQuads_base(this, this._spriteFrame, this._contentSize, this._insetLeft, this._insetRight, this._insetTop, this._insetBottom);
-            break;
-        default:
-            this._quadsDirty = false;
-            this._uvsDirty = false;
-            this._renderCmd._needDraw = false;
-            cc.error('Can not generate quad');
-            return;
+          case RenderingType.SIMPLE:
+              simpleQuadGenerator._rebuildQuads_base(this, this._spriteFrame, this._contentSize, this._isTrimmedContentSize);
+              break;
+          case RenderingType.SLICED:
+              scale9QuadGenerator._rebuildQuads_base(this, this._spriteFrame, this._contentSize, this._insetLeft, this._insetRight, this._insetTop, this._insetBottom);
+              break;
+          default:
+              this._quadsDirty = false;
+              this._uvsDirty = false;
+              this._renderCmd._needDraw = false;
+              cc.error('Can not generate quad');
+              return;
         }
 
         // Culling
