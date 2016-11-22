@@ -150,7 +150,7 @@
         if (state === Scale9Sprite.state.NORMAL) {
             this._shaderProgram = cc.shaderCache.programForKey(cc.SHADER_SPRITE_POSITION_TEXTURECOLOR);
         } else if (state === Scale9Sprite.state.GRAY) {
-            this._shaderProgram = cc.Scale9Sprite.WebGLRenderCmd._getGrayShaderProgram();
+            this._shaderProgram = Scale9Sprite.WebGLRenderCmd._getGrayShaderProgram();
         }
     };
 
@@ -161,7 +161,8 @@
             return grayShader;
 
         grayShader = new cc.GLProgram();
-        grayShader.initWithVertexShaderByteArray(cc.SPRITE_POSITION_TEXTURE_COLOR_VERT, cc.Scale9Sprite.WebGLRenderCmd._grayShaderFragment);
+        grayShader.initWithVertexShaderByteArray(cc.SHADER_SPRITE_POSITION_TEXTURE_COLOR_VERT,
+                                                 ccui.Scale9Sprite.WebGLRenderCmd._grayShaderFragment);
         grayShader.addAttribute(cc.ATTRIBUTE_NAME_POSITION, cc.VERTEX_ATTRIB_POSITION);
         grayShader.addAttribute(cc.ATTRIBUTE_NAME_COLOR, cc.VERTEX_ATTRIB_COLOR);
         grayShader.addAttribute(cc.ATTRIBUTE_NAME_TEX_COORD, cc.VERTEX_ATTRIB_TEX_COORDS);
