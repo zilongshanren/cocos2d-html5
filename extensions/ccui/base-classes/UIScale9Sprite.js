@@ -541,6 +541,23 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
         this._updateCapInsets(spriteFrame._rect, capInsets);
     },
 
+    initWithSpriteFrameName: function (spriteFrameName, capInsets) {
+        if(!spriteFrameName)
+            throw new Error("ccui.Scale9Sprite.initWithSpriteFrameName(): spriteFrameName should be non-null");
+        capInsets = capInsets || cc.rect(0, 0, 0, 0);
+
+        var frame = cc.spriteFrameCache.getSpriteFrame(spriteFrameName);
+        if (frame == null) {
+            cc.log("ccui.Scale9Sprite.initWithSpriteFrameName(): can't find the sprite frame by spriteFrameName");
+            return false;
+        }
+        this.setSpriteFrame(frame);
+
+        capInsets = capInsets || cc.rect(0, 0, 0, 0);
+
+        this._updateCapInsets(frame._rect, capInsets);
+    },
+
     loaded: function () {
         if (this._spriteFrame === null) {
             return false;

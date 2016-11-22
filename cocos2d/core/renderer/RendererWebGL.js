@@ -273,7 +273,10 @@ return {
         }
 
         // Check batching
-        var texture = cmd._node._texture || cmd._node._spriteFrame._texture;
+        var texture = cmd._node._texture || (cmd._node._spriteFrame ? cmd._node._spriteFrame._texture : null);
+        if (!texture) {
+            return;
+        }
         var blendSrc = cmd._node._blendFunc.src;
         var blendDst = cmd._node._blendFunc.dst;
         var shader = cmd._shaderProgram;
