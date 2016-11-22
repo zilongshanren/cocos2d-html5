@@ -77,7 +77,7 @@ cc.SpriteFrame = cc.Class.extend(/** @lends cc.SpriteFrame# */{
             if(rotated === undefined || offset === undefined || originalSize === undefined)
                 this.initWithTexture(filename, rect);
             else
-                this.initWithTexture(filename, rect, rotated, offset, originalSize)
+                this.initWithTexture(filename, rect, rotated, offset, originalSize);
         }
     },
 

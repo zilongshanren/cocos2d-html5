@@ -418,6 +418,36 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
         }
     },
 
+    getCapInsets: function () {
+        return cc.rect(this._capInsetsInternal);
+    },
+
+    _asyncSetCapInsets: function () {
+        this.removeEventListener('load', this._asyncSetCapInsets, this);
+        this.setCapInsets(this._cacheCapInsets);
+        this._cacheCapInsets = null;
+    },
+
+    setCapInsets: function (capInsets) {
+        // Asynchronous loading texture requires this data
+        // This data does not take effect immediately, so it does not affect the existing texture.
+        if (!this.loaded()) {
+            this._cacheCapInsets = capInsets;
+            this.removeEventListener('load', this._asyncSetCapInsets, this);
+            this.addEventListener('load', this._asyncSetCapInsets, this);
+            return false;
+        }
+
+        this._capInsetsInternal = capInsets;
+        this._updateCapInsets(this._spriteFrame._rect, this._capInsetsInternal);
+    },
+
+    setPreferredSize: function (preferredSize) {
+        if (!preferredSize || cc.sizeEqualToSize(this._contentSize, preferredSize)) return;
+
+        this.setContentSize(preferredSize);
+    },
+
     _updateCapInsets: function (rect, capInsets) {
         if(!capInsets || !rect || cc._rectEqualToZero(capInsets)) {
             rect = rect || {x:0, y:0, width: this._contentSize.width, height: this._contentSize.height};
@@ -457,7 +487,6 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
         }
 
         var locLoaded = texture.isLoaded();
-        this._textureLoaded = locLoaded;
         this._loader.clear();
         if (!locLoaded) {
             this._loader.once(texture, function () {
@@ -480,8 +509,7 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
 
         var texture = batchNode.getTexture();
         this._loader.clear();
-        var loaded = this._textureLoaded = texture.isLoaded();
-        if (!loaded) {
+        if (!texture.isLoaded()) {
             this._loader.once(texture, function () {
                 this.updateWithBatchNode(batchNode, originalRect, rotated, capInsets);
                 this.dispatchEvent("load");
@@ -521,8 +549,13 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
      *
      * @param textureOrTextureFile The name of the texture file.
      */
-    setTexture: function (textureOrTextureFile, rect) {
-        var spriteFrame = new cc.SpriteFrame(textureOrTextureFile, rect);
+    setTexture: function (texture, rect) {
+        //in this function, the texture already make sure is loaded.
+        if( cc._rectEqualToZero(rect)) {
+            var textureSize = texture.getContentSize();
+            rect = cc.rect(0, 0, textureSize.width, textureSize.height);
+        }
+        var spriteFrame = new cc.SpriteFrame(texture, rect);
         this.setSpriteFrame(spriteFrame);
     },
 
