@@ -135,8 +135,8 @@ var simpleQuadGenerator = {
 
     _calculateUVs: function (sprite, spriteFrame) {
         var uvs = sprite._uvs;
-        var atlasWidth = spriteFrame._texture._pixelWidth;
-        var atlasHeight = spriteFrame._texture._pixelHeight;
+        var atlasWidth = spriteFrame._texture._pixelsWide;
+        var atlasHeight = spriteFrame._texture._pixelsHigh;
         var textureRect = spriteFrame._rect;
 
         if (uvs.length < 8) {
@@ -496,6 +496,11 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
             return false;
         }
 
+        //in this function, the texture already make sure is loaded.
+        if( cc._rectEqualToZero(rect)) {
+            var textureSize = texture.getContentSize();
+            rect = cc.rect(0, 0, textureSize.width, textureSize.height);
+        }
         this.setTexture(texture, rect);
         this._updateCapInsets(rect, capInsets);
 
@@ -550,11 +555,6 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
      * @param textureOrTextureFile The name of the texture file.
      */
     setTexture: function (texture, rect) {
-        //in this function, the texture already make sure is loaded.
-        if( cc._rectEqualToZero(rect)) {
-            var textureSize = texture.getContentSize();
-            rect = cc.rect(0, 0, textureSize.width, textureSize.height);
-        }
         var spriteFrame = new cc.SpriteFrame(texture, rect);
         this.setSpriteFrame(spriteFrame);
     },
@@ -664,6 +664,7 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
      */
     setRenderingType: function (type) {
         if (this._renderingType === type) return;
+
         this._renderingType = type;
         this._quadsDirty = true;
         this._uvsDirty = true;
