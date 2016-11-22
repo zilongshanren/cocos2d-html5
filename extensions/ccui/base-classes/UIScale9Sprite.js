@@ -463,7 +463,7 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
             this._insetLeft = this._capInsetsInternal.x;
             this._insetTop = this._capInsetsInternal.y;
             this._insetRight = rect.width - this._insetLeft - this._capInsetsInternal.width;
-            this._insetBottom = rect.width - this._insetTop - this._capInsetsInternal.height;
+            this._insetBottom = rect.height - this._insetTop - this._capInsetsInternal.height;
         }
     },
 
