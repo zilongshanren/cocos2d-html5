@@ -377,7 +377,7 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
      * @param {cc.Rect} capInsets
      * @returns {Scale9Sprite}
      */
-    ctor: function (textureOrSpriteFrame, rectOrCapInsets, capInsets) {
+    ctor: function (file, rectOrCapInsets, capInsets) {
         cc.Node.prototype.ctor.call(this);
 
         //for async texture load
@@ -392,30 +392,30 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
         this._vertices = dataPool.get(8) || new Float32Array(8);
         this._uvs = dataPool.get(8) || new Float32Array(8);
 
-
-        // Init sprite frame
-        if (typeof textureOrSpriteFrame === 'string') {
-            var frame = cc.spriteFrameCache.getSpriteFrame(textureOrSpriteFrame);
-            if (frame) {
-                this.initWithSpriteFrame(frame);
-            } else {
-                this.initWithTexture(textureOrSpriteFrame);
+        if (file !== undefined) {
+            if (file instanceof cc.SpriteFrame)
+                this.initWithSpriteFrame(file, rectOrCapInsets);
+            else {
+                var frame = cc.spriteFrameCache.getSpriteFrame(file);
+                if (frame)
+                    this.initWithSpriteFrame(frame, rectOrCapInsets);
+                else
+                    this.initWithFile(file, rectOrCapInsets, capInsets);
             }
-        } else if (textureOrSpriteFrame instanceof cc.SpriteFrame) {
-            this.initWithSpriteFrame(textureOrSpriteFrame);
         }
-        else if (textureOrSpriteFrame instanceof cc.Texture2D) {
-            this.initWithTexture(textureOrSpriteFrame);
-        } else {
-            //TODO:
+        else {
+            // TODO: add a init function
             // this.init();
+            // this.setCascadeColorEnabled(true);
+            // this.setCascadeOpacityEnabled(true);
+            // this.setAnchorPoint(0.5, 0.5);
+            // this._positionsAreDirty = true;
         }
+
 
         if (webgl === undefined) {
             webgl = cc._renderType === cc.game.RENDER_TYPE_WEBGL;
         }
-
-        this._updateCapInsets(rectOrCapInsets, capInsets);
     },
 
     _updateCapInsets: function (rect, capInsets) {
@@ -497,20 +497,15 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
 
 
     /**
-     * Initializes a 9-slice sprite with a texture file
-     *
-     * @param textureOrTextureFile The name of the texture file.
-     */
-    initWithTexture: function (textureOrTextureFile, rect) {
-        this.setTexture(textureOrTextureFile, rect);
-    },
-
-    /**
      * Initializes a 9-slice sprite with an sprite frame
      * @param spriteFrameOrSFName The sprite frame object.
      */
-    initWithSpriteFrame: function (spriteFrameOrSFName) {
-        this.setSpriteFrame(spriteFrameOrSFName);
+    initWithSpriteFrame: function (spriteFrame, capInsets) {
+        this.setSpriteFrame(spriteFrame);
+
+        capInsets = capInsets || cc.rect(0, 0, 0, 0);
+
+        this._updateCapInsets(spriteFrame._rect, capInsets);
     },
 
     loaded: function () {
@@ -536,15 +531,7 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
      *
      * @param spriteFrameOrSFFileName The name of the texture file.
      */
-    setSpriteFrame: function (spriteFrameOrSFName) {
-        var spriteFrame;
-        if (spriteFrameOrSFName instanceof cc.SpriteFrame) {
-            spriteFrame = spriteFrameOrSFName;
-        }
-        else {
-            spriteFrame = cc.spriteFrameCache.getSpriteFrame(spriteFrameOrSFName);
-        }
-
+    setSpriteFrame: function (spriteFrame) {
         if (spriteFrame) {
             this._spriteFrame = spriteFrame;
             this._quadsDirty = true;
