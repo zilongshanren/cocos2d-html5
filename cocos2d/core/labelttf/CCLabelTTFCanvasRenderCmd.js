@@ -61,7 +61,7 @@ cc.LabelTTF._firsrEnglish = /^[a-zA-Z0-9ÄÖÜäöüßéèçàùêâîôû]/;
         }else {
             var deviceFontSize = fontSize * cc.view.getDevicePixelRatio();
             this._fontStyleStr = fontStyle + " " + fontWeight + " " + deviceFontSize + "px '" + fontNameOrFontDef + "'";
-            this._fontClientHeight = cc.LabelTTF.__getFontHeightByDiv(fontNameOrFontDef, fontSize);
+            this._fontClientHeight = cc.LabelTTF.__getFontHeightByDiv(fontNameOrFontDef, deviceFontSize);
         }
     };
 
