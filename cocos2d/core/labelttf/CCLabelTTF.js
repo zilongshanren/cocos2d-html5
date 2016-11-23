@@ -900,5 +900,6 @@ cc.LabelTTF.create = function (text, fontName, fontSize, dimensions, hAlignment,
 cc.LabelTTF.createWithFontDefinition = cc.LabelTTF.create;
 
 cc.LabelTTF.__getFontHeightByDiv = function (fontName, fontSize) {
-    return fontSize || this._fontSize;
+    var deviceFontSize = fontSize * cc.view.getDevicePixelRatio();
+    return fontSize || this._fontSize * deviceFontSize;
 };

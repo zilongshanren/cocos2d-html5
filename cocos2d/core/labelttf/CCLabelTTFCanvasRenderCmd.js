@@ -482,7 +482,6 @@ cc.LabelTTF._firsrEnglish = /^[a-zA-Z0-9ÄÖÜäöüßéèçàùêâîôû]/;
     proto._updateTexture = function () {
         this._dirtyFlag = this._dirtyFlag & cc.Node._dirtyFlags.textDirty ^ this._dirtyFlag;
         var node = this._node;
-        var scale = cc.view.getDevicePixelRatio();
         this._updateTTF();
         if (node._string.length === 0) {
             node.setTextureRect(this._texRect);
