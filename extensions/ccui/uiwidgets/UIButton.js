@@ -179,8 +179,10 @@ ccui.Button = ccui.Widget.extend(/** @lends ccui.Button# */{
         if (this._unifySize)
             return this._getNormalSize();
 
-        if (!this._normalTextureLoaded && this._titleRenderer.getString().length > 0) {
-            return this._titleRenderer.getContentSize();
+        if (!this._normalTextureLoaded ) {
+            if(this._titleRenderer && this._titleRenderer.getString().length > 0) {
+                return this._titleRenderer.getContentSize();
+            }
         }
         return cc.size(this._normalTextureSize);
     },
@@ -265,6 +267,9 @@ ccui.Button = ccui.Widget.extend(/** @lends ccui.Button# */{
         this._normalTextureLoaded = normalSpriteFrame._textureLoaded;
         this._buttonNormalSpriteFrame = normalSpriteFrame;
         this._buttonScale9Renderer.setSpriteFrame(normalSpriteFrame);
+        if (this._scale9Enabled){
+            this._buttonScale9Renderer.setCapInsets(this._capInsetsNormal);
+        }
 
         // FIXME: https://github.com/cocos2d/cocos2d-x/issues/12249
         if(!this._ignoreSize &&  cc.sizeEqualToSize(this._customSize, cc.size(0, 0))) {
@@ -453,89 +458,95 @@ ccui.Button = ccui.Widget.extend(/** @lends ccui.Button# */{
     },
 
     _onPressStateChangedToNormal: function () {
-        this._buttonNormalRenderer.setVisible(true);
-        this._buttonClickedRenderer.setVisible(false);
-        this._buttonDisableRenderer.setVisible(false);
-        if (this._scale9Enabled)
-            this._buttonNormalRenderer.setState( ccui.Scale9Sprite.state.NORMAL);
+        this._buttonScale9Renderer.setSpriteFrame(this._buttonNormalSpriteFrame);
+
+        if (this._scale9Enabled) {
+            this._buttonScale9Renderer.setState( ccui.Scale9Sprite.state.NORMAL);
+        }
+
         if (this._pressedTextureLoaded) {
             if (this.pressedActionEnabled){
-                this._buttonNormalRenderer.stopAllActions();
-                this._buttonClickedRenderer.stopAllActions();
-                this._buttonNormalRenderer.setScale(1.0);
-                this._buttonClickedRenderer.setScale(1.0);
+                this._buttonScale9Renderer.stopAllActions();
+                this._buttonScale9Renderer.setScale(1.0);
 
-                this._titleRenderer.stopAllActions();
-                if (this._unifySize){
-                    var zoomTitleAction = cc.scaleTo(ccui.Button.ZOOM_ACTION_TIME_STEP, 1, 1);
-                    this._titleRenderer.runAction(zoomTitleAction);
-                }else{
-                    this._titleRenderer.setScaleX(1);
-                    this._titleRenderer.setScaleY(1);
+                if(this._titleRenderer) {
+                    this._titleRenderer.stopAllActions();
+
+                    if (this._unifySize){
+                        var zoomTitleAction = cc.scaleTo(ccui.Button.ZOOM_ACTION_TIME_STEP, 1, 1);
+                        this._titleRenderer.runAction(zoomTitleAction);
+                    }else{
+                        this._titleRenderer.setScaleX(1);
+                        this._titleRenderer.setScaleY(1);
+                    }
                 }
+
             }
         } else {
-            this._buttonNormalRenderer.stopAllActions();
-            this._buttonNormalRenderer.setScale(1.0);
+            this._buttonScale9Renderer.stopAllActions();
+            this._buttonScale9Renderer.setScale(1.0);
 
-            this._titleRenderer.stopAllActions();
-            if (this._scale9Enabled)
-                this._buttonNormalRenderer.setColor(cc.color.WHITE);
+            if (this._scale9Enabled) {
+                this._buttonScale9Renderer.setColor(cc.color.WHITE);
+            }
 
-            this._titleRenderer.setScaleX(1);
-            this._titleRenderer.setScaleY(1);
+            if(this._titleRenderer) {
+                this._titleRenderer.stopAllActions();
+
+                this._titleRenderer.setScaleX(1);
+                this._titleRenderer.setScaleY(1);
+            }
         }
     },
 
     _onPressStateChangedToPressed: function () {
-        var locNormalRenderer = this._buttonNormalRenderer;
-        if (this._scale9Enabled)
-            locNormalRenderer.setState(ccui.Scale9Sprite.state.NORMAL);
+        if (this._scale9Enabled) {
+            this._buttonScale9Renderer.setState(ccui.Scale9Sprite.state.NORMAL);
+        }
 
         if (this._pressedTextureLoaded) {
-            locNormalRenderer.setVisible(false);
-            this._buttonClickedRenderer.setVisible(true);
-            this._buttonDisableRenderer.setVisible(false);
+            this._buttonScale9Renderer.setSpriteFrame(this._buttonClickedSpriteFrame);
+
             if (this.pressedActionEnabled) {
-                locNormalRenderer.stopAllActions();
-                this._buttonClickedRenderer.stopAllActions();
+                this._buttonScale9Renderer.stopAllActions();
+
                 var zoomAction = cc.scaleTo(ccui.Button.ZOOM_ACTION_TIME_STEP,
                                             1.0 + this._zoomScale,
                                             1.0 + this._zoomScale);
-                this._buttonClickedRenderer.runAction(zoomAction);
-                locNormalRenderer.setScale(1.0 + this._zoomScale, 1.0 + this._zoomScale);
+                this._buttonScale9Renderer.runAction(zoomAction);
 
-                this._titleRenderer.stopAllActions();
-                this._titleRenderer.runAction(cc.scaleTo(ccui.Button.ZOOM_ACTION_TIME_STEP,
-                                                         1 + this._zoomScale,
-                                                         1 + this._zoomScale));
+                if(this._titleRenderer) {
+                    this._titleRenderer.stopAllActions();
+                    this._titleRenderer.runAction(cc.scaleTo(ccui.Button.ZOOM_ACTION_TIME_STEP,
+                                                             1 + this._zoomScale,
+                                                             1 + this._zoomScale));
+                }
             }
         } else {
-            locNormalRenderer.setVisible(true);
-            this._buttonClickedRenderer.setVisible(true);
-            this._buttonDisableRenderer.setVisible(false);
-            locNormalRenderer.stopAllActions();
-            locNormalRenderer.setScale(1.0 + this._zoomScale, 1.0 + this._zoomScale);
+            this._buttonScale9Renderer.setSpriteFrame(this._buttonClickedSpriteFrame);
 
-            this._titleRenderer.stopAllActions();
-            this._titleRenderer.setScaleX(1 + this._zoomScale);
-            this._titleRenderer.setScaleY(1 + this._zoomScale);
+            this._buttonScale9Renderer.stopAllActions();
+            this._buttonScale9Renderer.setScale(1.0 + this._zoomScale, 1.0 + this._zoomScale);
+
+            if (this._titleRenderer) {
+                this._titleRenderer.stopAllActions();
+                this._titleRenderer.setScaleX(1 + this._zoomScale);
+                this._titleRenderer.setScaleY(1 + this._zoomScale);
+            }
         }
     },
 
     _onPressStateChangedToDisabled: function () {
         //if disable resource is null
         if (!this._disabledTextureLoaded){
-            if (this._normalTextureLoaded && this._scale9Enabled)
-                this._buttonNormalRenderer.setState(ccui.Scale9Sprite.state.GRAY);
+            if (this._normalTextureLoaded && this._scale9Enabled) {
+                this._buttonScale9Renderer.setState(ccui.Scale9Sprite.state.GRAY);
+            }
         }else{
-            this._buttonNormalRenderer.setVisible(false);
-            this._buttonDisableRenderer.setVisible(true);
+            this._buttonScale9Renderer.setSpriteFrame(this._buttonDisableSpriteFrame);
         }
 
-        this._buttonClickedRenderer.setVisible(false);
-        this._buttonNormalRenderer.setScale(1.0);
-        this._buttonClickedRenderer.setScale(1.0);
+        this._buttonScale9Renderer.setScale(1.0);
     },
 
     _updateContentSize: function(){
@@ -556,7 +567,9 @@ ccui.Button = ccui.Widget.extend(/** @lends ccui.Button# */{
 
     _onSizeChanged: function () {
         ccui.Widget.prototype._onSizeChanged.call(this);
-        this._updateTitleLocation();
+        if(this._titleRenderer) {
+            this._updateTitleLocation();
+        }
         this._normalTextureAdaptDirty = true;
     },
 
@@ -597,8 +610,10 @@ ccui.Button = ccui.Widget.extend(/** @lends ccui.Button# */{
      * @param {String} text
      */
     setTitleText: function (text) {
-        if(text === this.getTitleText())
-            return;
+        if(text === this.getTitleText()) return;
+
+        this._createTitleRendererIfNeeded();
+
         this._titleRenderer.setString(text);
         if (this._ignoreSize){
             var s = this.getVirtualRendererSize();
@@ -613,7 +628,10 @@ ccui.Button = ccui.Widget.extend(/** @lends ccui.Button# */{
      * @returns {String} text
      */
     getTitleText: function () {
-        return this._titleRenderer.getString();
+        if(this._titleRenderer) {
+            return this._titleRenderer.getString();
+        }
+        return "";
     },
 
     /**
@@ -621,6 +639,7 @@ ccui.Button = ccui.Widget.extend(/** @lends ccui.Button# */{
      * @param {cc.Color} color
      */
     setTitleColor: function (color) {
+        this._createTitleRendererIfNeeded();
         this._titleRenderer.setFontFillColor(color);
     },
 
@@ -629,7 +648,10 @@ ccui.Button = ccui.Widget.extend(/** @lends ccui.Button# */{
      * @returns {cc.Color}
      */
     getTitleColor: function () {
-        return this._titleRenderer._getFillStyle();
+        if (this._titleRenderer) {
+            return this._titleRenderer._getFillStyle();
+        }
+        return cc.color.WHITE;
     },
 
     /**
@@ -637,6 +659,8 @@ ccui.Button = ccui.Widget.extend(/** @lends ccui.Button# */{
      * @param {cc.Size} size
      */
     setTitleFontSize: function (size) {
+        this._createTitleRendererIfNeeded();
+
         this._titleRenderer.setFontSize(size);
         this._fontSize = size;
     },
@@ -646,7 +670,10 @@ ccui.Button = ccui.Widget.extend(/** @lends ccui.Button# */{
      * @returns {Number}
      */
     getTitleFontSize: function () {
-        return this._titleRenderer.getFontSize();
+        if (this._titleRenderer) {
+            return this._titleRenderer.getFontSize();
+        }
+        return this._fontSize;
     },
 
     /**
@@ -682,6 +709,8 @@ ccui.Button = ccui.Widget.extend(/** @lends ccui.Button# */{
      * @param {String} fontName
      */
     setTitleFontName: function (fontName) {
+        this._createTitleRendererIfNeeded();
+
         this._titleRenderer.setFontName(fontName);
         this._fontName = fontName;
     },
@@ -700,7 +729,10 @@ ccui.Button = ccui.Widget.extend(/** @lends ccui.Button# */{
      * @returns {String}
      */
     getTitleFontName: function () {
-        return this._titleRenderer.getFontName();
+        if(this._titleRenderer) {
+            return this._titleRenderer.getFontName();
+        }
+        return this._fontName;
     },
 
     _setTitleFont: function (font) {
@@ -725,15 +757,19 @@ ccui.Button = ccui.Widget.extend(/** @lends ccui.Button# */{
 
     _copySpecialProperties: function (uiButton) {
         this._prevIgnoreSize = uiButton._prevIgnoreSize;
+        this._capInsetsNormal = uiButton._capInsetsNormal;
         this.setScale9Enabled(uiButton._scale9Enabled);
+
         this.loadTextureNormal(uiButton._normalFileName, uiButton._normalTexType);
         this.loadTexturePressed(uiButton._clickedFileName, uiButton._pressedTexType);
         this.loadTextureDisabled(uiButton._disabledFileName, uiButton._disabledTexType);
-        this.setCapInsetsNormalRenderer(uiButton._capInsetsNormal);
-        this.setTitleText(uiButton.getTitleText());
-        this.setTitleFontName(uiButton.getTitleFontName());
-        this.setTitleFontSize(uiButton.getTitleFontSize());
-        this.setTitleColor(uiButton.getTitleColor());
+
+        if(uiButton._titleRenderer && uiButton._titleRenderer._string) {
+            this.setTitleText(uiButton.getTitleText());
+            this.setTitleFontName(uiButton.getTitleFontName());
+            this.setTitleFontSize(uiButton.getTitleFontSize());
+            this.setTitleColor(uiButton.getTitleColor());
+        }
         this.setPressedActionEnabled(uiButton.pressedActionEnabled);
         this.setZoomScale(uiButton._zoomScale);
     },
@@ -743,9 +779,7 @@ ccui.Button = ccui.Widget.extend(/** @lends ccui.Button# */{
         if (this._titleRenderer !== null)
             titleSize = this._titleRenderer.getContentSize();
 
-        var imageSize;
-        if (this._buttonNormalRenderer !== null)
-            imageSize = this._buttonNormalRenderer.getContentSize();
+        var imageSize = this._buttonScale9Renderer.getContentSize();
         var width = titleSize.width > imageSize.width ? titleSize.width : imageSize.width;
         var height = titleSize.height > imageSize.height ? titleSize.height : imageSize.height;
 

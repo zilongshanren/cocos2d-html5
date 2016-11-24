@@ -307,23 +307,26 @@
                 button.setSize(cc.size(sw, sh));
         }
         var text = options["text"];
-        if (text != null)
+        if (text) {
+            cc.log("ccs text = " + text);
             button.setTitleText(text);
 
-        var cr = options["textColorR"];
-        var cg = options["textColorG"];
-        var cb = options["textColorB"];
-        var cri = cr!==null?options["textColorR"]:255;
-        var cgi = cg!==null?options["textColorG"]:255;
-        var cbi = cb!==null?options["textColorB"]:255;
+            var cr = options["textColorR"];
+            var cg = options["textColorG"];
+            var cb = options["textColorB"];
+            var cri = cr!==null?options["textColorR"]:255;
+            var cgi = cg!==null?options["textColorG"]:255;
+            var cbi = cb!==null?options["textColorB"]:255;
 
-        button.setTitleColor(cc.color(cri,cgi,cbi));
-        var fs = options["fontSize"];
-        if (fs != null)
-            button.setTitleFontSize(options["fontSize"]);
-        var fn = options["fontName"];
-        if (fn)
-            button.setTitleFontName(options["fontName"]);
+            button.setTitleColor(cc.color(cri,cgi,cbi));
+            var fs = options["fontSize"];
+            if (fs != null)
+                button.setTitleFontSize(options["fontSize"]);
+            var fn = options["fontName"];
+            if (fn)
+                button.setTitleFontName(options["fontName"]);
+        }
+
     };
     /**
      * CheckBox parser (UICheckBox)
