@@ -256,7 +256,7 @@ ccui.Button = ccui.Widget.extend(/** @lends ccui.Button# */{
         this._normalTextureLoaded = normalRenderer.loaded();
 
         // FIXME: https://github.com/cocos2d/cocos2d-x/issues/12249
-        if(this._ignoreSize &&  cc.sizeEqualToSize(this._customSize, cc.size(0, 0))) {
+        if(!this._ignoreSize &&  cc.sizeEqualToSize(this._customSize, cc.size(0, 0))) {
             this._customSize = this._buttonNormalRenderer.getContentSize();
         }
 
