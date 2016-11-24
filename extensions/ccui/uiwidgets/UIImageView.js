@@ -255,9 +255,9 @@ ccui.ImageView = ccui.Widget.extend(/** @lends ccui.ImageView# */{
     _copySpecialProperties: function (imageView) {
         if(imageView instanceof ccui.ImageView){
             this._prevIgnoreSize = imageView._prevIgnoreSize;
-            this.setScale9Enabled(imageView._scale9Enabled);
+            this._capInsets = imageView._capInsets;
             this.loadTexture(imageView._textureFile, imageView._imageTexType);
-            this.setCapInsets(imageView._capInsets);
+            this.setScale9Enabled(imageView._scale9Enabled);
         }
     },
     /**
