@@ -61,7 +61,7 @@ cc.LabelTTF._firsrEnglish = /^[a-zA-Z0-9ÄÖÜäöüßéèçàùêâîôû]/;
         }else {
             var deviceFontSize = fontSize * cc.view.getDevicePixelRatio();
             this._fontStyleStr = fontStyle + " " + fontWeight + " " + deviceFontSize + "px '" + fontNameOrFontDef + "'";
-            this._fontClientHeight = cc.LabelTTF.__getFontHeightByDiv(fontNameOrFontDef, deviceFontSize);
+            this._fontClientHeight = cc.LabelTTF.__getFontHeightByDiv(fontNameOrFontDef, fontSize);
         }
     };
 
@@ -121,7 +121,11 @@ cc.LabelTTF._firsrEnglish = /^[a-zA-Z0-9ÄÖÜäöüßéèçàùêâîôû]/;
         } else {
             this._strings = node._string.split('\n');
             for (i = 0, strLength = this._strings.length; i < strLength; i++) {
-                locLineWidth.push(this._measure(this._strings[i]));
+                if(this._strings[i]) {
+                    locLineWidth.push(this._measure(this._strings[i]));
+                } else {
+                    locLineWidth.push(0);
+                }
             }
         }
 
@@ -443,7 +447,11 @@ cc.LabelTTF._firsrEnglish = /^[a-zA-Z0-9ÄÖÜäöüßéèçàùêâîôû]/;
     };
 
     proto._measure = function (text) {
-        return this._labelContext.measureText(text).width;
+        if(text) {
+            return this._labelContext.measureText(text).width;
+        } else {
+            return 0;
+        }
     };
 
 })();
@@ -474,9 +482,13 @@ cc.LabelTTF._firsrEnglish = /^[a-zA-Z0-9ÄÖÜäöüßéèçàùêâîôû]/;
     proto._measureConfig = function () {};
 
     proto._measure = function (text) {
-        var context = cc._renderContext.getContext();
-        context.font = this._fontStyleStr;
-        return context.measureText(text).width;
+        if(text) {
+            var context = cc._renderContext.getContext();
+            context.font = this._fontStyleStr;
+            return context.measureText(text).width;
+        } else {
+            return 0;
+        }
     };
 
     proto._updateTexture = function () {

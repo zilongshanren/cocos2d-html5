@@ -404,14 +404,6 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
                     this.initWithFile(file, rectOrCapInsets, capInsets);
             }
         }
-        else {
-            // TODO: add a init function
-            // this.init();
-            // this.setCascadeColorEnabled(true);
-            // this.setCascadeOpacityEnabled(true);
-            // this.setAnchorPoint(0.5, 0.5);
-            // this._positionsAreDirty = true;
-        }
 
 
         if (webgl === undefined) {

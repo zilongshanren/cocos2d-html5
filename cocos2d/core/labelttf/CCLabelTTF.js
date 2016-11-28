@@ -133,7 +133,9 @@ cc.LabelTTF = cc.Sprite.extend(/** @lends cc.LabelTTF# */{
         this._renderCmd._setFontStyle(this._fontName, fontSize, this._fontStyle, this._fontWeight);
         this.string = strInfo;
         this._renderCmd._setColorsString();
-        this._renderCmd._updateTexture();
+        if(this._string) {
+            this._renderCmd._updateTexture();
+        }
         this._setUpdateTextureDirty();
 
         // Needed for high dpi text.
@@ -193,7 +195,7 @@ cc.LabelTTF = cc.Sprite.extend(/** @lends cc.LabelTTF# */{
     getLineHeight: function () {
         return !this._lineHeight || this._lineHeight.charAt ?
             this._renderCmd._getFontClientHeight() :
-            this._lineHeight || this._renderCmd._getFontClientHeight();
+        this._lineHeight || this._renderCmd._getFontClientHeight();
     },
 
     setLineHeight: function (lineHeight) {
@@ -512,7 +514,7 @@ cc.LabelTTF = cc.Sprite.extend(/** @lends cc.LabelTTF# */{
         this._fontName = textDefinition.fontName;
         this._fontSize = textDefinition.fontSize || 12;
 
-        if(textDefinition.lineHeight)
+        if (textDefinition.lineHeight)
             this._lineHeight = textDefinition.lineHeight
         else
             this._lineHeight = this._fontSize;
@@ -537,7 +539,7 @@ cc.LabelTTF = cc.Sprite.extend(/** @lends cc.LabelTTF# */{
         if (mustUpdateTexture)
             this._renderCmd._updateTexture();
         var flags = cc.Node._dirtyFlags;
-        this._renderCmd.setDirtyFlag(flags.colorDirty|flags.opacityDirty|flags.textDirty);
+        this._renderCmd.setDirtyFlag(flags.colorDirty | flags.opacityDirty | flags.textDirty);
     },
 
     _prepareTextDefinition: function (adjustForResolution) {
@@ -804,18 +806,18 @@ cc.LabelTTF = cc.Sprite.extend(/** @lends cc.LabelTTF# */{
      * @returns {cc.Size} The content size
      */
     getContentSize: function () {
-        if (this._needUpdateTexture)
+        if (this._needUpdateTexture && this._string)
             this._renderCmd._updateTTF();
         return cc.size(this._contentSize);
     },
 
     _getWidth: function () {
-        if (this._needUpdateTexture)
+        if (this._needUpdateTexture && this._string)
             this._renderCmd._updateTTF();
         return this._contentSize.width;
     },
     _getHeight: function () {
-        if (this._needUpdateTexture)
+        if (this._needUpdateTexture && this._string)
             this._renderCmd._updateTTF();
         return this._contentSize.height;
     },
@@ -843,7 +845,7 @@ cc.LabelTTF = cc.Sprite.extend(/** @lends cc.LabelTTF# */{
     },
 
     //For web only
-    _setFontStyle: function(fontStyle){
+    _setFontStyle: function (fontStyle) {
         if (this._fontStyle !== fontStyle) {
             this._fontStyle = fontStyle;
             this._renderCmd._setFontStyle(this._fontName, this._fontSize, this._fontStyle, this._fontWeight);
@@ -851,11 +853,11 @@ cc.LabelTTF = cc.Sprite.extend(/** @lends cc.LabelTTF# */{
         }
     },
 
-    _getFontStyle: function(){
+    _getFontStyle: function () {
         return this._fontStyle;
     },
 
-    _setFontWeight: function(fontWeight){
+    _setFontWeight: function (fontWeight) {
         if (this._fontWeight !== fontWeight) {
             this._fontWeight = fontWeight;
             this._renderCmd._setFontStyle(this._fontName, this._fontSize, this._fontStyle, this._fontWeight);
@@ -863,7 +865,7 @@ cc.LabelTTF = cc.Sprite.extend(/** @lends cc.LabelTTF# */{
         }
     },
 
-    _getFontWeight: function(){
+    _getFontWeight: function () {
         return this._fontWeight;
     }
 });
@@ -899,7 +901,59 @@ cc.LabelTTF.create = function (text, fontName, fontSize, dimensions, hAlignment,
  */
 cc.LabelTTF.createWithFontDefinition = cc.LabelTTF.create;
 
+cc.LabelTTF.__labelHeightDiv = document.createElement("div");
+cc.LabelTTF.__labelHeightDiv.style.fontFamily = "Arial";
+cc.LabelTTF.__labelHeightDiv.style.position = "absolute";
+cc.LabelTTF.__labelHeightDiv.style.left = "-100px";
+cc.LabelTTF.__labelHeightDiv.style.top = "-100px";
+cc.LabelTTF.__labelHeightDiv.style.lineHeight = "normal";
+
+document.body ?
+    document.body.appendChild(cc.LabelTTF.__labelHeightDiv) :
+    window.addEventListener('load', function () {
+        this.removeEventListener('load', arguments.callee, false);
+        document.body.appendChild(cc.LabelTTF.__labelHeightDiv);
+    }, false);
+
+/**
+ * Returns the height of text with an specified font family and font size, in
+ * device independent pixels.
+ *
+ * @param {string|cc.FontDefinition} fontName
+ * @param {number} fontSize
+ * @returns {number}
+ * @private
+ */
 cc.LabelTTF.__getFontHeightByDiv = function (fontName, fontSize) {
-    var deviceFontSize = fontSize * cc.view.getDevicePixelRatio();
-    return fontSize || this._fontSize * deviceFontSize;
+    var clientHeight, labelDiv = cc.LabelTTF.__labelHeightDiv;
+    if(fontName instanceof cc.FontDefinition){
+        /** @type cc.FontDefinition */
+        var fontDef = fontName;
+        clientHeight = cc.LabelTTF.__fontHeightCache[fontDef._getCanvasFontStr()];
+        if (clientHeight > 0) return clientHeight;
+        labelDiv.innerHTML = "ajghl~!";
+        labelDiv.style.fontFamily = fontDef.fontName;
+        labelDiv.style.fontSize = fontDef.fontSize + "px";
+        labelDiv.style.fontStyle = fontDef.fontStyle;
+        labelDiv.style.fontWeight = fontDef.fontWeight;
+
+        clientHeight = labelDiv.clientHeight;
+        cc.LabelTTF.__fontHeightCache[fontDef._getCanvasFontStr()] = clientHeight;
+        labelDiv.innerHTML = "";
+    }
+    else {
+        //Default
+        clientHeight = cc.LabelTTF.__fontHeightCache[fontName + "." + fontSize];
+        if (clientHeight > 0) return clientHeight;
+        labelDiv.innerHTML = "ajghl~!";
+        labelDiv.style.fontFamily = fontName;
+        labelDiv.style.fontSize = fontSize + "px";
+        clientHeight = labelDiv.clientHeight;
+        cc.LabelTTF.__fontHeightCache[fontName + "." + fontSize] = clientHeight;
+        labelDiv.innerHTML = "";
+    }
+    return clientHeight;
+
 };
+
+cc.LabelTTF.__fontHeightCache = {};
