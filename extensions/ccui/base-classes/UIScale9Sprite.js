@@ -110,7 +110,6 @@ var simpleQuadGenerator = {
             vertices[7] = r * wt.b + t * wt.d + wt.ty;
         }
         else {
-            // sprite._isTriangle = true;
             vertices[0] = l;
             vertices[1] = b;
             vertices[2] = r;
@@ -660,9 +659,9 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
             if(this._spriteFrame) {
                 return this._spriteFrame._originalSize;
             }
-            return cc.size(0, 0);
+            return cc.size(this._contentSize);
         } else {
-            return this._contentSize;
+            return cc.size(this._contentSize);
         }
     },
 
