@@ -110,6 +110,7 @@ var simpleQuadGenerator = {
             vertices[7] = r * wt.b + t * wt.d + wt.ty;
         }
         else {
+            // sprite._isTriangle = true;
             vertices[0] = l;
             vertices[1] = b;
             vertices[2] = r;
@@ -363,7 +364,7 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
     _quadsDirty: true,
     _uvsDirty: true,
     _isTriangle: false,
-    _isTrimmedContentSize: true,
+    _isTrimmedContentSize: false,
 
     //v3.3
     _flippedX: false,
@@ -576,6 +577,22 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
         this.setSpriteFrame(spriteFrame);
     },
 
+    _updateBlendFunc: function () {
+        // it's possible to have an untextured sprite
+        var blendFunc = this._blendFunc;
+        if (!this._spriteFrame || !this._spriteFrame._texture.hasPremultipliedAlpha()) {
+            if (blendFunc.src === cc.ONE && blendFunc.dst === cc.BLEND_DST) {
+                blendFunc.src = cc.SRC_ALPHA;
+            }
+            this.opacityModifyRGB = false;
+        } else {
+            if (blendFunc.src === cc.SRC_ALPHA && blendFunc.dst === cc.BLEND_DST) {
+                blendFunc.src = cc.ONE;
+            }
+            this.opacityModifyRGB = true;
+        }
+    },
+
     /**
      * Change the sprite frame of 9 slice sprite
      *
@@ -613,12 +630,12 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
      */
     setBlendFunc: function (blendFunc, dst) {
         if (dst === undefined) {
-            this._blendFunc.src = blendFunc.src || cc.macro.BLEND_SRC;
-            this._blendFunc.dst = blendFunc.dst || cc.macro.BLEND_DST;
+            this._blendFunc.src = blendFunc.src || cc.BLEND_SRC;
+            this._blendFunc.dst = blendFunc.dst || cc.BLEND_DST;
         }
         else {
-            this._blendFunc.src = blendFunc || cc.macro.BLEND_SRC;
-            this._blendFunc.dst = dst || cc.macro.BLEND_DST;
+            this._blendFunc.src = blendFunc || cc.BLEND_SRC;
+            this._blendFunc.dst = dst || cc.BLEND_DST;
         }
         this._renderCmd.setDirtyFlag(cc.Node._dirtyFlags.contentDirty);
     },
@@ -644,6 +661,17 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
 
         cc.Node.prototype.setContentSize.call(this, width, height);
         this._quadsDirty = true;
+    },
+
+    getContentSize: function() {
+        if(this._renderingType === ccui.Scale9Sprite.RenderingType.SIMPLE) {
+            if(this._spriteFrame) {
+                return this._spriteFrame._originalSize;
+            }
+            return cc.size(0, 0);
+        } else {
+            return this._contentSize;
+        }
     },
 
     _setWidth: function (value) {
@@ -771,6 +799,9 @@ ccui.Scale9Sprite = cc.Scale9Sprite = cc.Node.extend(/** @lends ccui.Scale9Sprit
         if (!this._spriteFrame || !this._spriteFrame._textureLoaded) {
             return;
         }
+
+        this._updateBlendFunc();
+
         this._isTriangle = false;
         switch (this._renderingType) {
           case RenderingType.SIMPLE:

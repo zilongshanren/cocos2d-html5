@@ -27,12 +27,8 @@
 (function() {
     ccui.Scale9Sprite.CanvasRenderCmd = function (renderable) {
         cc.Node.CanvasRenderCmd.call(this, renderable);
-        if (this._node.loaded()) {
-            this._needDraw = true;
-        }
-        else {
-            this._needDraw = false;
-        }
+        this._needDraw = true;
+
         this._state = ccui.Scale9Sprite.state.NORMAL;
         this._originalTexture = this._textureToRender = null;
     };
@@ -43,6 +39,10 @@
     proto.transform = function(parentCmd, recursive){
         this.originTransform(parentCmd, recursive);
         this._node._rebuildQuads();
+    };
+
+    proto.needDraw = function () {
+        return this._needDraw && this._node.loaded();
     };
 
     proto._updateDisplayColor = function(parentColor){
@@ -86,54 +86,14 @@
             }
             var sx,sy,sw,sh;
             var x, y, w,h;
-            var textureWidth = this._textureToRender._pixelWidth;
-            var textureHeight = this._textureToRender._pixelHeight;
+            var textureWidth = this._textureToRender._pixelsWide;
+            var textureHeight = this._textureToRender._pixelsHigh;
             var image = this._textureToRender._htmlElementObj;
             var vertices = node._vertices;
             var uvs = node._uvs;
             var i = 0, off = 0;
 
-            if (node._isTriangle) {
-                var rawVerts = node._rawVerts, rawUvs = node._rawUvs;
-                x = rawVerts[0];
-                y = rawVerts[1];
-                w = rawVerts[6] - x;
-                h = rawVerts[7] - y;
-                y = - y - h;
-
-                sx = rawUvs[4] * textureWidth;
-                sy = rawUvs[5] * textureHeight;
-                sw = (rawUvs[6] - rawUvs[0]) * textureWidth;
-                sh = (rawUvs[1] - rawUvs[7]) * textureHeight;
-
-
-                wrapper.save();
-                context.beginPath();
-                var triangleCount = Math.floor(node._vertCount / 3);
-
-                for (i = 0, off = 0; i < triangleCount; i++) {
-                    context.moveTo(vertices[off++], -vertices[off++]);
-                    context.lineTo(vertices[off++], -vertices[off++]);
-                    context.lineTo(vertices[off++], -vertices[off++]);
-                }
-
-                context.clip();
-                if (this._textureToRender._pattern !== '') {
-                    wrapper.setFillStyle(context.createPattern(image, this._textureToRender._pattern));
-                    context.fillRect(x, y, w, h);
-                }
-                else {
-                    if (sw > 0 && sh > 0 && w > 0 && h > 0) {
-                        context.drawImage(image,
-                                          sx, sy, sw, sh,
-                                          x, y, w, h);
-                    }
-                }
-
-                wrapper.restore();
-                cc.g_NumberOfDraws += triangleCount;
-            }
-            else if (node._renderingType === cc.Scale9Sprite.RenderingType.SLICED) {
+            if (node._renderingType === cc.Scale9Sprite.RenderingType.SLICED) {
                 // Sliced use a special vertices layout 16 vertices for 9 quads
                 for (var r = 0; r < 3; ++r) {
                     for (var c = 0; c < 3; ++c) {
@@ -157,6 +117,34 @@
                     }
                 }
                 cc.g_NumberOfDraws += 9;
+            } else {
+                var quadCount = Math.floor(node._vertCount / 4);
+                for (i = 0, off = 0; i < quadCount; i++) {
+                    x = vertices[off];
+                    y = vertices[off+1];
+                    w = vertices[off+6] - x;
+                    h = vertices[off+7] - y;
+                    y = - y - h;
+
+                    sx = uvs[off] * textureWidth;
+                    sy = uvs[off+7] * textureHeight;
+                    sw = (uvs[off+6] - uvs[off]) * textureWidth;
+                    sh = (uvs[off+1] - uvs[off+7]) * textureHeight;
+
+
+                    if (this._textureToRender._pattern !== '') {
+                        wrapper.setFillStyle(context.createPattern(image, this._textureToRender._pattern));
+                        context.fillRect(x, y, w, h);
+                    } else {
+                        if (sw > 0 && sh > 0 && w > 0 && h > 0) {
+                            context.drawImage(image,
+                                              sx, sy, sw, sh,
+                                              x, y, w, h);
+                        }
+                    }
+                    off += 8;
+                }
+                cc.g_NumberOfDraws += quadCount;
             }
         }
     };

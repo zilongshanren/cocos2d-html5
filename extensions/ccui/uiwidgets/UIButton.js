@@ -259,7 +259,6 @@ ccui.Button = ccui.Widget.extend(/** @lends ccui.Button# */{
             this._loader.clear();
             this._loader.once(normalSpriteFrame, function () {
                 this.loadTextureNormal(this._normalFileName, this._normalTexType);
-                this.dispatchEvent("load");
             }, this);
             return;
         }
@@ -324,7 +323,6 @@ ccui.Button = ccui.Widget.extend(/** @lends ccui.Button# */{
             this._loader.clear();
             this._loader.once(clickedSpriteFrame, function () {
                 this.loadTexturePressed(this._clickedFileName, this._pressedTexType);
-                this.dispatchEvent("load");
             }, this);
             return;
         }
