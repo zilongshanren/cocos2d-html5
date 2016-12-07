@@ -230,7 +230,14 @@ cc.LabelBMFont = cc.SpriteBatchNode.extend(/** @lends cc.LabelBMFont# */{
 
             self._config = newConf;
             self._fntFile = fntFile;
-            texture = cc.textureCache.addImage(newConf.atlasName);
+            var spriteFrameBaseName = cc.path.basename(newConf.atlasName);
+            var spriteFrame = cc.spriteFrameCache.getSpriteFrame(spriteFrameBaseName);
+            if(spriteFrame) {
+                texture = spriteFrame.getTexture();
+                this._spriteFrame = spriteFrame;
+            } else {
+                texture = cc.textureCache.addImage(newConf.atlasName);
+            }
             var locIsLoaded = texture.isLoaded();
             self._textureLoaded = locIsLoaded;
             if (!locIsLoaded) {
@@ -336,15 +343,30 @@ cc.LabelBMFont = cc.SpriteBatchNode.extend(/** @lends cc.LabelBMFont# */{
             rect.x += self._imageOffset.x;
             rect.y += self._imageOffset.y;
 
+            var isRotated = false;
+            if(this._spriteFrame) {
+                var textureWidth = locTexture.width;
+                var spriteFrameRect = this._spriteFrame._rect;
+                if(!this._spriteFrame._rotated) {
+                    rect.x = rect.x + spriteFrameRect.x;
+                    rect.y = rect.y + spriteFrameRect.y;
+                } else {
+                    isRotated = true;
+                    var originalX = rect.x;
+                    rect.x = rect.y + spriteFrameRect.x;
+                    rect.y = originalX + spriteFrameRect.y;
+                }
+            }
+
             var fontChar = self.getChildByTag(i);
 
             if (!fontChar) {
                 fontChar = new cc.Sprite();
-                fontChar.initWithTexture(locTexture, rect, false);
+                fontChar.initWithTexture(locTexture, rect, isRotated);
                 fontChar._newTextureWhenChangeColor = true;
                 this.addChild(fontChar, 0, i);
             } else {
-                cmd._updateCharTexture(fontChar, rect, key);
+                cmd._updateCharTexture(fontChar, rect, key, isRotated);
             }
 
             // Apply label properties
