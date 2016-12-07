@@ -224,8 +224,11 @@ cc.LabelBMFont = cc.SpriteBatchNode.extend(/** @lends cc.LabelBMFont# */{
         if (fntFile) {
             var newConf = cc.loader.getRes(fntFile);
             if (!newConf) {
-                cc.log("cc.LabelBMFont.initWithString(): Impossible to create font. Please check file");
-                return false;
+                newConf = cc.FntFrameCache[cc.path.basename(fntFile)];
+                if(!newConf) {
+                    cc.log("cc.LabelBMFont.initWithString(): Impossible to create font. Please check file");
+                    return false;
+                }
             }
 
             self._config = newConf;
@@ -881,7 +884,11 @@ cc.LabelBMFont.create = function (str, fntFile, width, alignment, imageOffset) {
     return new cc.LabelBMFont(str, fntFile, width, alignment, imageOffset);
 };
 
+cc.FntFrameCache = {};
+
 var _fntLoader = {
+    FNT_HEAD: /fntframes [^\n]*(\n|$)/gi,
+    FNT_FRAME_NAME: /fntframe [^\n]*(\n|$)/gi,
     INFO_EXP: /info [^\n]*(\n|$)/gi,
     COMMON_EXP: /common [^\n]*(\n|$)/gi,
     PAGE_EXP: /page [^\n]*(\n|$)/gi,
@@ -907,24 +914,8 @@ var _fntLoader = {
         return obj;
     },
 
-    /**
-     * Parse Fnt string.
-     * @param fntStr
-     * @param url
-     * @returns {{}}
-     */
-    parseFnt: function (fntStr, url) {
-        var self = this, fnt = {};
-        //padding
-        var infoObj = self._parseStrToObj(fntStr.match(self.INFO_EXP)[0]);
-        var paddingArr = infoObj["padding"].split(",");
-        var padding = {
-            left: parseInt(paddingArr[0]),
-            top: parseInt(paddingArr[1]),
-            right: parseInt(paddingArr[2]),
-            bottom: parseInt(paddingArr[3])
-        };
-
+    _parseFntContent: function (fnt, fntStr, url) {
+        var self = this;
         //common
         var commonObj = self._parseStrToObj(fntStr.match(self.COMMON_EXP)[0]);
         fnt.commonHeight = commonObj["lineHeight"];
@@ -963,6 +954,39 @@ var _fntLoader = {
                 kerningDict[(kerningObj["first"] << 16) | (kerningObj["second"] & 0xffff)] = kerningObj["amount"];
             }
         }
+
+        return fnt;
+    },
+
+    /**
+     * Parse Fnt string.
+     * @param fntStr
+     * @param url
+     * @returns {{}}
+     */
+    parseFnt: function (fntStr, url) {
+        var self = this, fnt = {};
+        var headString = fntStr.match(self.FNT_HEAD);
+        if(headString) {
+            var headObj = self._parseStrToObj(headString[0]);
+            if(headObj && headObj.count) {
+                fntStr = fntStr.substr(headString[0].length);
+                var fntFrames = fntStr.split("----");
+                for(var i = 0; i < headObj.count; ++i) {
+                    var contentString = fntFrames[i];
+                    var frameNameStr = contentString.match(self.FNT_FRAME_NAME);
+                    if(frameNameStr) {
+                        var frameName = self._parseStrToObj(frameNameStr[0]);
+                        if(frameName && frameName.name) {
+                            fnt = {};
+                            cc.FntFrameCache[frameName.name] = this._parseFntContent(fnt, contentString.substr(frameNameStr[0].length), url);
+                        }
+                    }
+                }
+            }
+        } else {
+            fnt = this._parseFntContent(fnt, fntStr, url);
+        }
         return fnt;
     },
 
@@ -982,3 +1006,4 @@ var _fntLoader = {
     }
 };
 cc.loader.register(["fnt"], _fntLoader);
+
