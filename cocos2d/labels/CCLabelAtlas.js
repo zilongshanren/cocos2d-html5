@@ -82,24 +82,21 @@ cc.LabelAtlas = cc.LabelBMFont.extend(/** @lends cc.LabelBMFont# */{
 
         var fontDefDictionary = fnt.fontDefDictionary = {};
 
-        var offset = 0;
-        if(startCharMap && startCharMap !== "0") {
-            fontDefDictionary[startCharMap.charCodeAt(0)] = {
-                rect: {x: 0, y:0, width:itemWidth, height: itemHeight },
-                xOffset: 0,
-                yOffset: 0,
-                xAdvance: itemWidth
-            };
-            offset = 1;
-        }
-        var startCharCode = 48;
-        for(var i = 0; i < 10; ++i) {
-            fontDefDictionary[startCharCode+i] = {
-                rect: {x: (i + offset) * itemWidth, y:0, width:itemWidth, height: itemHeight },
-                xOffset: 0,
-                yOffset: 0,
-                xAdvance: itemWidth
-            };
+        var textureWidth = texture.pixelsWidth;
+        var textureHeight = texture.pixelsHeight;
+
+        var startCharCode = startCharMap.charCodeAt(0);
+        var i = 0;
+        for (var col = itemHeight; col <= textureHeight; col += itemHeight) {
+            for (var row = 0; row < textureWidth; row += itemWidth) {
+                fontDefDictionary[startCharCode+i] = {
+                    rect: {x: row, y: col - itemHeight, width:itemWidth, height: itemHeight },
+                    xOffset: 0,
+                    yOffset: 0,
+                    xAdvance: itemWidth
+                };
+                ++i;
+            }
         }
 
         fnt.kerningDict = {};
@@ -146,7 +143,6 @@ cc.LabelAtlas = cc.LabelBMFont.extend(/** @lends cc.LabelBMFont# */{
             height = itemHeight || 0;
             startChar = startCharMap || " ";
         }
-
 
         var texture;
         if (charMapFile) {
@@ -202,18 +198,6 @@ cc.LabelAtlas = cc.LabelBMFont.extend(/** @lends cc.LabelBMFont# */{
     }
 
 });
-
-(function () {
-    var proto = cc.LabelAtlas.prototype;
-    // Override properties
-    cc.defineGetterSetter(proto, "opacity", proto.getOpacity, proto.setOpacity);
-    cc.defineGetterSetter(proto, "color", proto.getColor, proto.setColor);
-
-    // Extended properties
-    /** @expose */
-    proto.string;
-    cc.defineGetterSetter(proto, "string", proto.getString, proto.setString);
-})();
 
 /**
  * <p>
